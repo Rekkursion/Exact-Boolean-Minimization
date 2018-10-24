@@ -1,2 +1,3 @@
 # Exact-Boolean-Minimization
-through Quine-McClusky w/ Petrick's Method
+through Quine-McClusky w/ Petrick's Method <br />
+<strong>WIP<strong/>
