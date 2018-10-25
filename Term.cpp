@@ -18,7 +18,7 @@ Term::~Term() {}
 std::ostream& operator<<(std::ostream& ostream, Term& term) {
 	for (std::vector<int>::iterator it_v = term.getM().begin(); it_v != term.getM().end(); it_v++)
 		ostream << (*it_v) << ", ";
-	ostream << "|" << term.getBinaryRep() << "|\n";
+	ostream << "|" << term.getBinaryRep() << "|" << term.getSymbol() << "\n";
 
 	return ostream;
 }
@@ -56,4 +56,12 @@ std::string Term::getBinaryRep() {
 }
 void Term::setBinaryRep(std::string newBinaryRep) {
 	binaryRep = newBinaryRep;
+}
+
+std::string Term::getSymbol() {
+	return symbol;
+}
+
+void Term::setSymbol(std::string newSymbol) {
+	symbol = newSymbol;
 }

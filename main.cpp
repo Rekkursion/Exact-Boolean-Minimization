@@ -2,18 +2,13 @@
 #include <fstream>
 #include <string>
 #include <set>
-#include <cmath>
 #include <algorithm>
 #include "Utility.h"
 
-bool getInput(int, char**);
-void getTerms(int, int, std::string, const std::string, const std::string);
-bool combineTerms();
-
 int main(int argc, char** argv) {
 	getInput(argc, argv);
-	while (combineTerms());
-
+	quineMcClusky();
+	petricksMethod();
 
 	return 0;
 }
@@ -40,7 +35,7 @@ bool getInput(int argc, char** argv) {
 		// .i
 		if (word == CMD_I) {
 			fin >> varNum;
-			termList.clear();
+			mintermList.clear();
 		}
 
 		// .o
@@ -69,6 +64,7 @@ bool getInput(int argc, char** argv) {
 		// .p
 		else if (word == CMD_P) {
 			fin >> pNum;
+			termList.clear();
 		}
 
 		// .e
@@ -90,6 +86,7 @@ bool getInput(int argc, char** argv) {
 	}
 
 	sort(termList.begin(), termList.end(), [] (Term& lhs, Term& rhs) -> bool { return (lhs.getM()[0] < rhs.getM()[0]); });
+	sort(mintermList.begin(), mintermList.end(), [] (Minterm& lhs, Minterm& rhs) -> bool { return (lhs.number < rhs.number); });
 
 	#ifdef DEBUGS
 	for (int k = 0; k < termList.size(); k++) {
@@ -122,6 +119,9 @@ void getTerms(int curIdx, int curNum, std::string bRep, std::string input, const
 		Term t(vec, trueBinaryRep);
 		termList.push_back(t);
 
+		Minterm m(curNum, (output == "-"));
+		mintermList.push_back(m);
+
 		return;
 	}
 
@@ -131,14 +131,19 @@ void getTerms(int curIdx, int curNum, std::string bRep, std::string input, const
 	}
 
 	else if (input[curIdx] == '1') {
-		getTerms(curIdx - 1, curNum + (int)pow(2, input.length() - curIdx - 1), bRep + "1", input, output);
+		getTerms(curIdx - 1, curNum + (1 << (input.length() - curIdx - 1)), bRep + "1", input, output);
 	}
 
 	else if (input[curIdx] == '-') {
 		getTerms(curIdx - 1, curNum, bRep + "0", input, output);
-		getTerms(curIdx - 1, curNum + (int)pow(2, input.length() - curIdx - 1), bRep + "1", input, output);
+		getTerms(curIdx - 1, curNum + (1 << (input.length() - curIdx - 1)), bRep + "1", input, output);
 	}
 
+	return;
+}
+
+void quineMcClusky() {
+	while (combineTerms());
 	return;
 }
 
@@ -183,8 +188,6 @@ bool combineTerms() {
 					}
 				}
 			}
-
-			//std::cout << (canCombine ? "true" : "false") << " | " << rep1 << ", " << rep2 << "\n";
 
 			if (canCombine) {
 				std::set<int> minterms;
@@ -242,6 +245,60 @@ bool combineTerms() {
 	termList.clear();
 	for (int i = 0; i < tmpTermList.size(); i++)
 		termList.push_back(tmpTermList[i]);
+
+	return true;
+}
+
+bool petricksMethod() {
+	std::vector<std::vector<std::vector<Term> > > equation;
+	std::vector<std::vector<Term> > sum;
+
+	for (std::vector<Minterm>::iterator it_v = mintermList.begin(); it_v != mintermList.end(); it_v++) {
+		if (it_v->isDontCare)
+			continue;
+
+		sum.clear();
+		for (int k = 0; k < termList.size(); k++) {
+
+			bool found = false;
+			for (int j = 0; j < termList[k].getM().size(); j++) {
+				if (termList[k].getM()[j] == it_v->number) {
+					found = true;
+					break;
+				}
+			}
+
+			if (found) {
+				std::vector<Term> terms;
+				terms.push_back(termList[k]);
+
+				sum.push_back(terms);
+			}
+		}
+
+		equation.push_back(sum);
+	}
+
+	#ifdef DEBUG
+	puts("\nin Petrick");
+	for (int k = 0; k < equation.size(); k++) {
+		std::cout << "(";
+		for (int j = 0; j < equation[k].size(); j++) {
+			for(int i = 0; i < equation[k][j].size(); i++)
+				std::cout << equation[k][j][0].getBinaryRep() << (i == equation[k][j].size() - 1 ? "" : "|");
+
+			std::cout << (j == equation[k].size() - 1 ? "" : " + ");
+		}
+		std::cout << ")";
+	}
+	puts("");
+	#endif
+
+	for (int k = 0; k < equation.size(); k++) {
+		for (int j = k + 1; j < equation.size(); j++) {
+
+		}
+	}
 
 	return true;
 }

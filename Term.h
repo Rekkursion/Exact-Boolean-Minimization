@@ -20,10 +20,14 @@ public:
 	std::string getBinaryRep();
 	void setBinaryRep(std::string);
 
+	std::string getSymbol();
+	void setSymbol(std::string);
+
 	bool hasBeenCombined;
 
 private:
 	std::vector<int> m; // integers in this term
 	std::string binaryRep; // binary representation
+	std::string symbol;
 };
 
