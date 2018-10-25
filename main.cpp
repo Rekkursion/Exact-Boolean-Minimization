@@ -6,9 +6,21 @@
 #include "Utility.h"
 
 int main(int argc, char** argv) {
-	getInput(argc, argv);
+	if (!getInput(argc, argv))
+		return 0;
+
 	quineMcClusky();
-	petricksMethod();
+
+	finalAnswer = petricksMethod();
+
+	#ifdef DEBUG
+	puts("in main");
+	for (int j = 0; j < finalAnswer.size(); j++)
+		std::cout << finalAnswer[j].getBinaryRep() << "|";
+	puts("");
+	#endif
+
+	outputFile(argv[2]);
 
 	return 0;
 }
@@ -35,7 +47,7 @@ bool getInput(int argc, char** argv) {
 		// .i
 		if (word == CMD_I) {
 			fin >> varNum;
-			mintermList.clear();
+			implicantList.clear();
 		}
 
 		// .o
@@ -86,7 +98,7 @@ bool getInput(int argc, char** argv) {
 	}
 
 	sort(termList.begin(), termList.end(), [] (Term& lhs, Term& rhs) -> bool { return (lhs.getM()[0] < rhs.getM()[0]); });
-	sort(mintermList.begin(), mintermList.end(), [] (Minterm& lhs, Minterm& rhs) -> bool { return (lhs.number < rhs.number); });
+	sort(implicantList.begin(), implicantList.end(), [] (Implicant& lhs, Implicant& rhs) -> bool { return (lhs.number < rhs.number); });
 
 	#ifdef DEBUGS
 	for (int k = 0; k < termList.size(); k++) {
@@ -96,6 +108,8 @@ bool getInput(int argc, char** argv) {
 		std::cout << termList[k].getBinaryRep() << "|" << std::endl;
 	}
 	#endif
+
+	fin.close();
 
 	return true;
 }
@@ -119,8 +133,8 @@ void getTerms(int curIdx, int curNum, std::string bRep, std::string input, const
 		Term t(vec, trueBinaryRep);
 		termList.push_back(t);
 
-		Minterm m(curNum, (output == "-"));
-		mintermList.push_back(m);
+		Implicant imp(curNum, (output == "-"));
+		implicantList.push_back(imp);
 
 		return;
 	}
@@ -249,11 +263,16 @@ bool combineTerms() {
 	return true;
 }
 
-bool petricksMethod() {
-	std::vector<std::vector<std::vector<Term> > > equation;
-	std::vector<std::vector<Term> > sum;
+std::vector<Term> petricksMethod() {
+	std::vector<std::vector<Term> > equation, tmpEquation;
+	std::vector<std::vector<std::vector<Term> > > equas, tmpEquas;
+	std::vector<Term> sum, product, ret;
+	bool found;
+	int foundNum;
+	int minSize = INF, minLiteralNum = INF;
 
-	for (std::vector<Minterm>::iterator it_v = mintermList.begin(); it_v != mintermList.end(); it_v++) {
+	// create petrick
+	for (std::vector<Implicant>::iterator it_v = implicantList.begin(); it_v != implicantList.end(); it_v++) {
 		if (it_v->isDontCare)
 			continue;
 
@@ -268,12 +287,8 @@ bool petricksMethod() {
 				}
 			}
 
-			if (found) {
-				std::vector<Term> terms;
-				terms.push_back(termList[k]);
-
-				sum.push_back(terms);
-			}
+			if (found)
+				sum.push_back(termList[k]);
 		}
 
 		equation.push_back(sum);
@@ -283,22 +298,246 @@ bool petricksMethod() {
 	puts("\nin Petrick");
 	for (int k = 0; k < equation.size(); k++) {
 		std::cout << "(";
-		for (int j = 0; j < equation[k].size(); j++) {
-			for(int i = 0; i < equation[k][j].size(); i++)
-				std::cout << equation[k][j][0].getBinaryRep() << (i == equation[k][j].size() - 1 ? "" : "|");
+		for (int j = 0; j < equation[k].size(); j++)
+			std::cout << equation[k][j].getBinaryRep() << (j == equation[k].size() - 1 ? "" : " + ");
+		std::cout << ")";
+	}
+	puts("");
+	#endif
 
-			std::cout << (j == equation[k].size() - 1 ? "" : " + ");
+	// simplify: step 1
+	for (int k = 0; k < equation.size(); k++) {
+		for (int j = 0; j < equation.size(); j++) {
+			if (k == j || equation[k].size() > equation[j].size())
+				continue;
+
+			foundNum = 0;
+			found = false;
+
+			for (std::vector<Term>::iterator it_vk = equation[k].begin(); it_vk != equation[k].end(); it_vk++) {
+				for (std::vector<Term>::iterator it_vj = equation[j].begin(); it_vj != equation[j].end(); it_vj++) {
+					if ((*it_vk) == (*it_vj)) {
+						foundNum++;
+						break;
+					}
+				}
+			}
+
+			// J is included K, e.g. (A)(A + B) or (B + C)(B + C + F)
+			if (foundNum == equation[k].size()) {
+
+				tmpEquation.clear();
+				for (int i = 0; i < equation.size(); i++) {
+					if (i == j)
+						continue;
+
+					tmpEquation.push_back(equation[i]);
+				}
+
+				equation.clear();
+				for (int i = 0; i < tmpEquation.size(); i++)
+					equation.push_back(tmpEquation[i]);
+
+				k = -1;
+				break;
+			}
+		}
+	}
+
+	#ifdef DEBUG
+	puts("\nin Petrick");
+	for (int k = 0; k < equation.size(); k++) {
+		std::cout << "(";
+		for (int j = 0; j < equation[k].size(); j++)
+			std::cout << equation[k][j].getBinaryRep() << (j == equation[k].size() - 1 ? "" : " + ");
+		std::cout << ")";
+	}
+	puts("");
+	#endif
+
+	// simplify: step 2
+	equas.clear();
+	for (int k = 0; k < equation.size(); k++) {
+
+		tmpEquation.clear();
+		for (int j = 0; j < equation[k].size(); j++) {
+
+			std::vector<Term> ts;
+			ts.push_back(equation[k][j]);
+			tmpEquation.push_back(ts);
+		}
+
+		equas.push_back(tmpEquation);
+	}
+
+	// simplify: step 3
+	for (int k = 0; k < equas.size(); k++) {
+		for (int j = k + 1; j < equas.size(); j++) {
+
+			tmpEquation.clear();
+			for (int ik = 0; ik < equas[k].size(); ik++) {
+				for (int ij = 0; ij < equas[j].size(); ij++) {
+					product = equas[k][ik] * equas[j][ij];
+
+					#ifdef DEBUG
+					for (std::vector<Term>::iterator it_v = product.begin(); it_v != product.end(); it_v++)
+						std::cout << (*it_v).getBinaryRep() << "]";
+					puts("");
+					#endif
+
+					tmpEquation.push_back(product);
+				}
+			}
+
+			tmpEquas.clear();
+			tmpEquas.push_back(tmpEquation);
+			for (int i = j + 1; i < equas.size(); i++)
+				tmpEquas.push_back(equas[i]);
+
+			equas.clear();
+			for (int i = 0; i < tmpEquas.size(); i++)
+				equas.push_back(tmpEquas[i]);
+
+			k = -1;
+			break;
+		}
+	}
+
+	#ifdef DEBUG
+	puts("\nin Petrick");
+	for (int k = 0; k < equas.size(); k++) {
+		std::cout << "(";
+		for (int j = 0; j < equas[k].size(); j++) {
+			for(int i = 0; i < equas[k][j].size(); i++)
+				std::cout << equas[k][j][i].getBinaryRep() << (i == equas[k][j].size() - 1 ? "" : "|");
+
+			std::cout << (j == equas[k].size() - 1 ? "" : " + ");
 		}
 		std::cout << ")";
 	}
 	puts("");
 	#endif
 
-	for (int k = 0; k < equation.size(); k++) {
-		for (int j = k + 1; j < equation.size(); j++) {
+	// simplify: step 4
+	{
+		equation.clear();
+		for (int k = 0; k < equas[0].size(); k++)
+			equation.push_back(equas[0][k]);
+	}
 
+	// simplify: step 5
+	for (int k = 0; k < equation.size(); k++) {
+		for (int j = 0; j < equation.size(); j++) {
+			if (k == j || equation[k].size() > equation[j].size())
+				continue;
+
+			foundNum = 0;
+			found = false;
+
+			for (std::vector<Term>::iterator it_vk = equation[k].begin(); it_vk != equation[k].end(); it_vk++) {
+				for (std::vector<Term>::iterator it_vj = equation[j].begin(); it_vj != equation[j].end(); it_vj++) {
+					if ((*it_vk) == (*it_vj)) {
+						foundNum++;
+						break;
+					}
+				}
+			}
+
+			// J is included K, e.g. (A)(A + B) or (B + C)(B + C + F)
+			if (foundNum == equation[k].size()) {
+
+				tmpEquation.clear();
+				for (int i = 0; i < equation.size(); i++) {
+					if (i == j)
+						continue;
+
+					tmpEquation.push_back(equation[i]);
+				}
+
+				equation.clear();
+				for (int i = 0; i < tmpEquation.size(); i++)
+					equation.push_back(tmpEquation[i]);
+
+				k = -1;
+				break;
+			}
 		}
 	}
+
+	#ifdef DEBUG
+	puts("\nin Petrick");
+	for (int k = 0; k < equation.size(); k++) {
+		for (int j = 0; j < equation[k].size(); j++)
+			std::cout << equation[k][j].getBinaryRep() << (j == equation[k].size() - 1 ? "" : "|");
+		std::cout << (k == equation.size() - 1 ? "" : " + ");
+	}
+	puts("");
+	#endif
+
+	// simplify: step 6
+	{
+		for (int k = 0; k < equation.size(); k++) {
+			if (equation[k].size() < minSize)
+				minSize = equation[k].size();
+		}
+		for (int k = 0; k < equation.size(); k++) {
+			if (equation[k].size() == minSize)
+				mintermList.push_back(equation[k]);
+		}
+
+		for (int k = 0; k < mintermList.size(); k++) {
+			literalNum = 0;
+			for (int j = 0; j < mintermList[k].size(); j++)
+				literalNum += mintermList[k][j].countLiteralNum();
+
+			if (literalNum < minLiteralNum)
+				minLiteralNum = literalNum;
+		}
+		for (int k = 0; k < mintermList.size(); k++) {
+			literalNum = 0;
+			for (int j = 0; j < mintermList[k].size(); j++)
+				literalNum += mintermList[k][j].countLiteralNum();
+
+			if (literalNum == minLiteralNum) {
+
+				ret.clear();
+				for (int j = 0; j < mintermList[k].size(); j++)
+					ret.push_back(mintermList[k][j]);
+
+				#ifdef DEBUG
+				std::cout << literalNum << ": ";
+				for (int j = 0; j < mintermList[k].size(); j++)
+					std::cout << mintermList[k][j].getBinaryRep() << "|";
+				puts("");
+				#endif
+
+				break;
+			}
+		}
+	}
+
+	return ret;
+}
+
+bool outputFile(char* outputFileName) {
+	finalTermNum = finalAnswer.size();
+
+	std::cout << "Total number of terms: " << finalTermNum << "\n";
+	std::cout << "Total number of literals: " << literalNum << "\n";
+
+	std::ofstream fout;
+	fout.open(outputFileName, std::ios::out);
+
+	fout << ".i " << varNum << "\n.o 1\n.ilb ";
+	for (std::vector<std::string>::iterator it_v = varSymbols.begin(); it_v != varSymbols.end(); it_v++)
+		fout << (*it_v) << (it_v == varSymbols.end() - 1 ? "" : " ");
+	fout << "\n.ob " << outputVarSymbols[0] << "\n";
+	fout << ".p " << finalTermNum << "\n";
+	for (int k = 0; k < finalTermNum; k++)
+		fout << finalAnswer[k].getBinaryRep() << " 1\n";
+	fout << ".e";
+
+	fout.close();
 
 	return true;
 }

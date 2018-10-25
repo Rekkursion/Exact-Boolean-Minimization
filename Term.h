@@ -13,6 +13,8 @@ public:
 	friend std::ostream& operator<<(std::ostream&, Term&);
 	bool operator==(Term&);
 	bool operator!=(Term&);
+	friend std::vector<Term> operator*(Term&, Term&);
+	friend std::vector<Term> operator*(std::vector<Term>&, std::vector<Term>&);
 
 	std::vector<int>& getM();
 	void setM(std::vector<int>);
@@ -22,6 +24,8 @@ public:
 
 	std::string getSymbol();
 	void setSymbol(std::string);
+
+	int countLiteralNum();
 
 	bool hasBeenCombined;
 

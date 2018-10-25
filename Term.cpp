@@ -39,6 +39,54 @@ bool Term::operator!=(Term& rhs) {
 	return (!(rhs == *this));
 }
 
+std::vector<Term> operator*(Term& lhs, Term& rhs) {
+	std::vector<Term> lhsv, rhsv;
+	lhsv.push_back(lhs);
+	rhsv.push_back(rhs);
+
+	return (lhsv * rhsv);
+}
+
+std::vector<Term> operator*(std::vector<Term>& lhs, std::vector<Term>& rhs) {
+	std::vector<Term> ret;
+	ret.clear();
+	bool already;
+
+	for (int k = 0; k < lhs.size(); k++) {
+		already = false;
+
+		for (int j = 0; j < ret.size(); j++) {
+			if (lhs[k].getBinaryRep() == ret[j].getBinaryRep()) {
+
+				already = true;
+				break;
+			}
+		}
+
+		if (!already) {
+			ret.push_back(lhs[k]);
+		}
+	}
+
+	for (int k = 0; k < rhs.size(); k++) {
+		already = false;
+
+		for (int j = 0; j < ret.size(); j++) {
+			if (rhs[k].getBinaryRep() == ret[j].getBinaryRep()) {
+
+				already = true;
+				break;
+			}
+		}
+
+		if (!already) {
+			ret.push_back(rhs[k]);
+		}
+	}
+
+	return ret;
+}
+
 std::vector<int>& Term::getM() {
 	return m;
 }
@@ -64,4 +112,13 @@ std::string Term::getSymbol() {
 
 void Term::setSymbol(std::string newSymbol) {
 	symbol = newSymbol;
+}
+
+int Term::countLiteralNum() {
+	int ret = 0;
+
+	for (int k = 0; k < binaryRep.length(); k++)
+		ret += (binaryRep[k] != '-');
+
+	return ret;
 }

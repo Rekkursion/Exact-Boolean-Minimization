@@ -4,8 +4,9 @@
 #include <vector>
 #include "Term.h"
 
-// define
-#define DEBUG
+// defines
+//#define DEBUG
+#define INF 214748367
 
 // defines
 #define CMD_I	".i"
@@ -23,12 +24,15 @@ bool getInput(int, char**);
 void getTerms(int, int, std::string, const std::string, const std::string);
 void quineMcClusky();
 bool combineTerms();
-bool petricksMethod();
+std::vector<Term> petricksMethod();
+bool outputFile(char*);
 
 // global variables
 int varNum; // number of variables
 int outputVarNum; // number of output variables, should be 1
 int pNum; // number of p
+int finalTermNum; // number of terms of the final answer
+int literalNum; // number of literals of the final answer
 
 // global variables
 std::vector<std::string> varSymbols; // symbols of variables
@@ -39,11 +43,15 @@ std::vector<Term> termList; // list of terms
 std::vector<Term> tmpTermList; // used for terms combination
 
 // global variables
-struct Minterm {
+struct Implicant {
 	int number;
 	bool isDontCare;
 
-	Minterm() { number = 0; isDontCare = false; }
-	Minterm(int newNumber, bool newIsDontCare) { number = newNumber; isDontCare = newIsDontCare; }
+	Implicant() { number = 0; isDontCare = false; }
+	Implicant(int newNumber, bool newIsDontCare) { number = newNumber; isDontCare = newIsDontCare; }
 };
-std::vector<Minterm> mintermList; // list of minterms
+std::vector<Implicant> implicantList; // list of implicants
+
+// global variables
+std::vector<std::vector<Term> > mintermList; // list of minterms
+std::vector<Term> finalAnswer;
