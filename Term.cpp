@@ -119,8 +119,9 @@ void Term::setSymbol(std::string newSymbol) {
 }
 
 int Term::countLiteralNum() {
-	int ret = 0;
+	int ret;
 
+	ret = 0;
 	for (int k = 0; k < binaryRep.length(); k++)
 		ret += (binaryRep[k] != '-');
 
