@@ -30,6 +30,8 @@ public:
 
 	bool hasBeenCombined;
 
+	static bool cmpTerm(Term lhs, Term rhs) { return (lhs.getM()[0] < rhs.getM()[0]); }
+
 private:
 	std::vector<int> m; // integers in this term
 	std::string binaryRep; // binary representation

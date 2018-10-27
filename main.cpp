@@ -97,7 +97,7 @@ bool getInput(int argc, char** argv) {
 		}
 	}
 
-	sort(termList.begin(), termList.end(), cmpTerm);
+	sort(termList.begin(), termList.end(), Term::cmpTerm);
 	sort(implicantList.begin(), implicantList.end(), Implicant::cmpImplicant);
 
 	#ifdef DEBUGS

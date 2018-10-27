@@ -26,7 +26,6 @@ void quineMcClusky();
 bool combineTerms();
 std::vector<Term> petricksMethod();
 bool outputFile(char*);
-bool cmpTerm(Term&, Term&);
 
 // global variables
 int varNum; // number of variables
@@ -50,14 +49,10 @@ struct Implicant {
 
 	Implicant() { number = 0; isDontCare = false; }
 	Implicant(int newNumber, bool newIsDontCare) { number = newNumber; isDontCare = newIsDontCare; }
-	static bool cmpImplicant(Implicant& lhs, Implicant& rhs) { return (lhs.number < rhs.number); }
+	static bool cmpImplicant(const Implicant lhs, const Implicant rhs) { return (lhs.number < rhs.number); }
 };
 std::vector<Implicant> implicantList; // list of implicants
 
 // global variables
 std::vector<std::vector<Term> > mintermList; // list of minterms
 std::vector<Term> finalAnswer;
-
-bool cmpTerm(Term& lhs, Term& rhs) {
-	return (lhs.getM()[0] < rhs.getM()[0]);
-}
