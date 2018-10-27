@@ -90,15 +90,15 @@ bool getInput(int argc, char** argv) {
 			std::string input = word, output;
 			fin >> output;
 
-			if(output == "1" || output == "-")
+			if (output == "1" || output == "-")
 				getTerms(input.length() - 1, 0, "", input, output);
 
 			varCount++;
 		}
 	}
 
-	sort(termList.begin(), termList.end(), [] (Term& lhs, Term& rhs) -> bool { return (lhs.getM()[0] < rhs.getM()[0]); });
-	sort(implicantList.begin(), implicantList.end(), [] (Implicant& lhs, Implicant& rhs) -> bool { return (lhs.number < rhs.number); });
+	sort(termList.begin(), termList.end(), cmpTerm);
+	sort(implicantList.begin(), implicantList.end(), Implicant::cmpImplicant);
 
 	#ifdef DEBUGS
 	for (int k = 0; k < termList.size(); k++) {
@@ -194,7 +194,7 @@ bool combineTerms() {
 				}
 
 				if (rep1[i] != rep2[i]) {
-					if(diffIdx == -1)
+					if (diffIdx == -1)
 						diffIdx = i;
 					else {
 						canCombine = false;
@@ -408,7 +408,7 @@ std::vector<Term> petricksMethod() {
 	for (int k = 0; k < equas.size(); k++) {
 		std::cout << "(";
 		for (int j = 0; j < equas[k].size(); j++) {
-			for(int i = 0; i < equas[k][j].size(); i++)
+			for (int i = 0; i < equas[k][j].size(); i++)
 				std::cout << equas[k][j][i].getBinaryRep() << (i == equas[k][j].size() - 1 ? "" : "|");
 
 			std::cout << (j == equas[k].size() - 1 ? "" : " + ");

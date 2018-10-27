@@ -15,6 +15,7 @@ public:
 	bool operator!=(Term&);
 	friend std::vector<Term> operator*(Term&, Term&);
 	friend std::vector<Term> operator*(std::vector<Term>&, std::vector<Term>&);
+	bool operator<(Term&);
 
 	std::vector<int>& getM();
 	void setM(std::vector<int>);

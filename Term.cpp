@@ -87,6 +87,10 @@ std::vector<Term> operator*(std::vector<Term>& lhs, std::vector<Term>& rhs) {
 	return ret;
 }
 
+bool Term::operator<(Term& rhs) {
+	return (this->getM()[0] < rhs.getM()[0]);
+}
+
 std::vector<int>& Term::getM() {
 	return m;
 }
